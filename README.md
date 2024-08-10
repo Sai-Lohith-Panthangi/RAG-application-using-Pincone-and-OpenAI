@@ -52,9 +52,9 @@ This project is a Retrieval-Augmented Generation (RAG) application that enables 
    -Use the chain.invoke method to ask questions, and the system will retrieve relevant chunks and generate an answer.
 
 ## Example:
-   **question = "What is the video about?"**
-   **response = chain.invoke({"question": question})**
-   **print(response)**
+   -**question = "What is the video about?"**
+   -**response = chain.invoke({"question": question})**
+   -**print(response)**
 
 ## Limitations:
    -Accuracy: The quality of responses depends on the transcription accuracy and the relevance of retrieved chunks.
