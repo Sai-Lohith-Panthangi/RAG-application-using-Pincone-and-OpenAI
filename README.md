@@ -27,38 +27,37 @@ This project is a Retrieval-Augmented Generation (RAG) application that enables 
    cd simple-rag-app 
 
 2. **Install Dependencies**:
-  Install the required Python packages using pip
-  ```bash
-   pip install -r requirements.txt
+   Install the required Python packages using pip
+   ```bash
+   pip install -r requirements.txt ```
 
 3. **Environment Variables**:
-  Create a .env file in the root directory and add your API keys:
+   Create a .env file in the root directory and add your API keys:
+   OPENAI_API_KEY=your-openai-api-key
+   PINECONE_API_KEY=your-pinecone-api-key
 
-OPENAI_API_KEY=your-openai-api-key
-PINECONE_API_KEY=your-pinecone-api-key
+4. **Run the Application**:
+   Execute the main script to transcribe a video and interact with the model:
+   ```bash
+   python main.py
 
- 4. **Run the Application**:
-Execute the main script to transcribe a video and interact with the model:
-```bash
-python main.py
+5. **Usage**:
+   Transcribe a YouTube Video:
+   Provide the URL of a YouTube video to download and transcribe its content.
 
-Usage
-Transcribe a YouTube Video:
-Provide the URL of a YouTube video to download and transcribe its content.
+6. **Store Transcription in Pinecone**:
+   The transcription is split into chunks and stored in Pinecone for efficient retrieval.
 
-Store Transcription in Pinecone:
-The transcription is split into chunks and stored in Pinecone for efficient retrieval.
+7. **Ask Questions**:
+   Use the chain.invoke method to ask questions, and the system will retrieve relevant chunks and generate an answer.
 
-Ask Questions:
-Use the chain.invoke method to ask questions, and the system will retrieve relevant chunks and generate an answer.
-
-Example:
-**
-question = "What is the video about?"
-response = chain.invoke({"question": question})
-print(response)
-**
-Limitations
-Accuracy: The quality of responses depends on the transcription accuracy and the relevance of retrieved chunks.
-Scalability: Handling very large videos or multiple videos may require optimization.
+8. **Example**:
+   **
+   question = "What is the video about?"
+   response = chain.invoke({"question": question})
+   print(response)
+   **
+9. **Limitations**:
+   Accuracy: The quality of responses depends on the transcription accuracy and the relevance of retrieved chunks.
+   Scalability: Handling very large videos or multiple videos may require optimization.
 
