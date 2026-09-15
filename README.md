@@ -1,62 +1,85 @@
-Building a simple Retrieval Augmented Generation Application using Pincone and OpenAI's API. This application will allow us to ask questions about any Youtube video.
-
 # Simple RAG Application with Pinecone and OpenAI
-This project is a Retrieval-Augmented Generation (RAG) application that enables users to ask questions about YouTube videos. The application transcribes the video, splits the text into chunks, stores them in a vector store, and retrieves relevant information to answer queries using OpenAI's GPT-3.5-turbo.
+
+This project is a Retrieval-Augmented Generation (RAG) application that enables users to ask questions about YouTube videos (including podcasts). The application transcribes the video, cleans and chunks the transcript, stores the chunks in a vector store, and retrieves relevant information to answer queries using OpenAI's GPT-3.5-turbo.
 
 ## Features
-- **Video Transcription**: Transcribes YouTube videos using OpenAI's Whisper.
-- **Text Chunking**: Splits large transcripts into smaller chunks for efficient processing.
-- **Vector Store Integration**: Uses Pinecone for storing and retrieving text chunks based on similarity to the query.
-- **Question Answering**: Generates answers to questions using retrieved text chunks with OpenAI's GPT-3.5-turbo.
+
+- **Video Transcription with Speaker Diarization**: Transcribes YouTube/podcast audio using **WhisperX**, which improves on base Whisper by separating individual speakers and producing more accurate word-level timestamps — useful for podcasts with crosstalk and background noise.
+- **Custom Transcript Cleaning & Chunking**: Custom Python preprocessing that:
+  - Strips filler words and low-signal/non-meaningful segments before embedding.
+  - Splits the cleaned transcript using a **sliding-window chunking strategy with ~20% overlap**, so an idea or sentence isn't cut off at a chunk boundary.
+  - Removes empty sections and repeated text left over from transcription.
+- **Vector Store Integration**: Uses Pinecone to store and retrieve chunk embeddings based on similarity to the query.
+- **Question Answering**: Generates answers to questions using retrieved chunks with OpenAI's GPT-3.5-turbo.
 
 ## Architecture
+
 - **Language Model**: OpenAI's GPT-3.5-turbo powers the generation of responses.
-- **Document Loader**: Transcribes video and splits the text.
-- **Vector Store**: Pinecone is used to store and query chunks of text.
-- **Chain**: Implements the logic to handle the question-answering process.
+- **Transcription**: WhisperX handles speech-to-text and speaker diarization.
+- **Preprocessing**: Custom logic (`transcript_preprocessing.py`) cleans the transcript and produces overlapping chunks via a sliding window.
+- **Embeddings**: OpenAI's embedding model vectorizes both transcript chunks and user questions — this is the only vectorization method used; Pinecone itself does not generate embeddings.
+- **Vector Store**: Pinecone stores chunk embeddings and performs similarity search to find the nearest chunks to a query.
+- **Chain**: Implements the logic to handle the question-answering process, from retrieval through to answer generation.
+
+## Design notes (why it's built this way)
+
+- **Vectorization**: OpenAI's embedding model is used for both transcript chunks and questions, with Pinecone purely as the similarity-search store. Retrieval quality was tuned by varying chunk size, chunk overlap, and the number of nearest neighbors (`k`) returned by Pinecone, rather than by swapping embedding models.
+- **Transcript cleaning**: Raw WhisperX output still contains filler words and low-value segments, so a custom cleaning pass filters those out before chunking. Poor chunking (too small, no overlap) can hurt retrieval even with a strong embedding model, which is why overlap and chunk size were tuned experimentally.
+- **What's custom vs. off-the-shelf**: WhisperX is used as-is for transcription and diarization (no point re-implementing speech separation). The cleaning, filtering, and sliding-window chunking logic on top of it is custom Python.
+- **Known limitations / possible next steps**: Finer-grained speaker attribution in downstream chunks and background-speech removal are not implemented yet, but are natural next improvements.
 
 ## Prerequisites
-- Python 3.7+
+
+- Python 3.9+
 - OpenAI API Key
 - Pinecone API Key
 
 ## Setup Instructions
+
 1. **Clone the Repository**:
+
    ```bash
-   git clone https://github.com/username/simple-rag-app.git
-   cd simple-rag-app 
+   git clone https://github.com/Sai-Lohith-Panthangi/RAG-application-using-Pincone-and-OpenAI.git
+   cd RAG-application-using-Pincone-and-OpenAI
+   ```
 
 2. **Install Dependencies**:
-   Install the required Python packages using pip
+
    ```bash
-   pip install -r requirements.txt ```
+   pip install -r requirements.txt
+   ```
 
 3. **Environment Variables**:
-   -Create a .env file in the root directory and add your API keys:
-   -OPENAI_API_KEY=your-openai-api-key
-   -PINECONE_API_KEY=your-pinecone-api-key
+   Create a `.env` file in the root directory and add your API keys:
+
+   ```
+   OPENAI_API_KEY=your-openai-api-key
+   PINECONE_API_KEY=your-pinecone-api-key
+   ```
 
 4. **Run the Application**:
-   Execute the main script to transcribe a video and interact with the model:
+
    ```bash
    python main.py
+   ```
 
 5. **Usage**:
-   Transcribe a YouTube Video:
-   -Provide the URL of a YouTube video to download and transcribe its content.
+   - Provide the URL of a YouTube video/podcast to download and transcribe its content.
+   - The transcript is cleaned and split into overlapping chunks by `transcript_preprocessing.py`.
+   - Chunks are embedded with OpenAI's embedding model and stored in Pinecone.
+   - Ask questions via `chain.invoke`; the system retrieves the nearest chunks from Pinecone and generates an answer.
 
-6. **Store Transcription in Pinecone**:
-   -The transcription is split into chunks and stored in Pinecone for efficient retrieval.
+## Example
 
-7. **Ask Questions**:
-   -Use the chain.invoke method to ask questions, and the system will retrieve relevant chunks and generate an answer.
+```python
+question = "What is the video about?"
+response = chain.invoke({"question": question})
+print(response)
+```
 
-## Example:
-   1. **question = "What is the video about?"**
-   2. **response = chain.invoke({"question": question})**
-   3. **print(response)**
+## Limitations
 
-## Limitations:
-   1. Accuracy: The quality of responses depends on the transcription accuracy and the relevance of retrieved chunks.
-   2. Scalability: Handling very large videos or multiple videos may require optimization.
-
+1. **Accuracy**: The quality of responses depends on transcription accuracy and the relevance of retrieved chunks.
+2. **Speaker attribution**: Diarization from WhisperX is not yet propagated into per-chunk metadata.
+3. **Background speech**: Removing background/non-primary-speaker audio is not yet implemented.
+4. **Scalability**: Handling very large videos or multiple videos may require further optimization.
