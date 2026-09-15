@@ -1,6 +1,6 @@
 # Simple RAG Application with Pinecone and OpenAI
 
-This project is a Retrieval-Augmented Generation (RAG) application that enables users to ask questions about YouTube videos (including podcasts). The application transcribes the video, cleans and chunks the transcript, stores the chunks in a vector store, and retrieves relevant information to answer queries using OpenAI's GPT-3.5-turbo.
+This project is a Retrieval-Augmented Generation (RAG) application that enables users to ask questions about YouTube videos (including podcasts). The application transcribes the video, cleans and chunks the transcript, stores the chunks in a vector store, and retrieves relevant information to answer queries using OpenAI's gpt-4o-mini.
 
 ## Features
 
@@ -10,11 +10,11 @@ This project is a Retrieval-Augmented Generation (RAG) application that enables 
   - Splits the cleaned transcript using a **sliding-window chunking strategy with ~20% overlap**, so an idea or sentence isn't cut off at a chunk boundary.
   - Removes empty sections and repeated text left over from transcription.
 - **Vector Store Integration**: Uses Pinecone to store and retrieve chunk embeddings based on similarity to the query.
-- **Question Answering**: Generates answers to questions using retrieved chunks with OpenAI's GPT-3.5-turbo.
+- **Question Answering**: Generates answers to questions using retrieved chunks with OpenAI's gpt-4o-mini.
 
 ## Architecture
 
-- **Language Model**: OpenAI's GPT-3.5-turbo powers the generation of responses.
+- **Language Model**: OpenAI's gpt-4o-mini powers the generation of responses.
 - **Transcription**: WhisperX handles speech-to-text and speaker diarization.
 - **Preprocessing**: Custom logic (`transcript_preprocessing.py`) cleans the transcript and produces overlapping chunks via a sliding window.
 - **Embeddings**: OpenAI's embedding model vectorizes both transcript chunks and user questions — this is the only vectorization method used; Pinecone itself does not generate embeddings.
