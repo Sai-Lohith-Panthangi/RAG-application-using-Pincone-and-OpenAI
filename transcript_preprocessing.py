@@ -9,11 +9,9 @@ Pipeline:
     2. Clean the resulting transcript (drop filler words / low-signal
        segments, collapse empty/repeated text).
     3. Chunk the cleaned transcript with a sliding window and ~20% overlap
-       so ideas aren't cut off at chunk boundaries (replaces
-       RecursiveCharacterTextSplitter).
+       so ideas aren't cut off at chunk boundaries.
     4. Convert chunks into LangChain `Document` objects so they drop
-       straight into `PineconeVectorStore.from_documents(...)` the same
-       way `text_splitter.split_documents(...)` output did before.
+       straight into `PineconeVectorStore.from_documents(...)`.
 
 WhisperX does the heavy lifting for speech-to-text and speaker separation.
 Everything below (cleaning + chunking) is custom logic written for this
@@ -34,7 +32,7 @@ from langchain_core.documents import Document
 # --------------------------------------------------------------------------
 
 # A minimal set of filler / disfluency tokens to strip during cleaning.
-# Extend as needed based on the domain of the podcast(s) you're indexing.
+
 FILLER_WORDS = {
     "um", "uh", "uhh", "umm", "erm", "er",
     "like", "you know", "i mean", "sort of", "kind of",
@@ -60,14 +58,13 @@ def transcribe_with_whisperx(
     """
     Transcribe + diarize an audio file with WhisperX.
 
-    WhisperX is used here (instead of base Whisper, which the original
-    notebook used) because it adds forced alignment and speaker
+    WhisperX is used here because it adds forced alignment and speaker
     diarization, which produces much cleaner segment boundaries for
     podcasts with crosstalk / multiple speakers.
 
     Requires: pip install whisperx
     Diarization requires a HuggingFace token with access to the
-    pyannote speaker-diarization models (set HF_TOKEN in your .env).
+    pyannote speaker-diarization models.
     """
     import os
 
@@ -129,7 +126,7 @@ def clean_transcript(
     min_words: int = 3,
 ) -> list[TranscriptSegment]:
     """
-    Remove empty/near-empty segments and repeated back-to-back lines,
+    It Removes empty/near-empty segments and repeated back-to-back lines,
     and strip filler words from what remains.
 
     min_words: segments with fewer than this many words after cleaning
@@ -180,8 +177,7 @@ def chunk_transcript(
     by chunk_size_words * (1 - overlap_ratio) each step. A ~20% overlap
     keeps a sentence or idea from being split across chunk boundaries,
     which was found empirically to improve retrieval quality alongside
-    tuning chunk size and Pinecone's top-k. This replaces
-    RecursiveCharacterTextSplitter's character-based splitting.
+    tuning chunk size and Pinecone's top-k. 
     """
     if not segments:
         return []
@@ -224,7 +220,7 @@ def chunks_to_documents(chunks: list[Chunk], source: str = "transcription.txt") 
     """
     Convert Chunk objects into LangChain Documents so they can be passed
     directly to PineconeVectorStore.from_documents(documents, embeddings, ...)
-    exactly like the original text_splitter.split_documents(...) output.
+
     """
     return [
         Document(
@@ -241,7 +237,7 @@ def chunks_to_documents(chunks: list[Chunk], source: str = "transcription.txt") 
 
 
 # --------------------------------------------------------------------------
-# End-to-end convenience wrapper
+# End-to-end wrapper
 # --------------------------------------------------------------------------
 
 def prepare_documents_for_embedding(
